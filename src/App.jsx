@@ -7,7 +7,7 @@ import PlaylistsTab from './components/PlaylistsTab'
 import SearchBar from './components/SearchBar'
 import Fav from './components/Fav'
 
-/* helpers: localStorage wrapper */
+/* localStorage state helper */
 const useLocal = (key, initial) => {
   const [state, setState] = useState(() => {
     try {
@@ -25,7 +25,7 @@ const useLocal = (key, initial) => {
   return [state, setState]
 }
 
-/* sample library */
+/* default songs */
 const defaultSongs = [
   {
     id: 's1',
@@ -53,18 +53,15 @@ const defaultSongs = [
   },
 ]
 
-
 export default function App() {
-  // persisted states
   const [songs, setSongs] = useLocal('bm_songs', defaultSongs)
   const [playlists, setPlaylists] = useLocal('bm_playlists', [])
-  const [queue, setQueue] = useLocal('bm_queue', [])
-  const [currentId, setCurrentId] = useLocal('bm_current', null)
-  const [isPlaying, setIsPlaying] = useLocal('bm_playing', false)
+  const [queue, setQueue] = useState([]) // 🔹 fresh queue (not persisted)
+  const [currentId, setCurrentId] = useState(null)
+  const [isPlaying, setIsPlaying] = useState(false)
   const [tab, setTab] = useLocal('bm_tab', 'home')
   const [favorites, setFavorites] = useLocal('bm_favs', [])
 
-  // transient states
   const [position, setPosition] = useState(0)
   const [duration, setDuration] = useState(0)
   const [expanded, setExpanded] = useState(false)
@@ -72,162 +69,76 @@ export default function App() {
 
   const audioRef = useRef(null)
 
-  // helpers
+  /* helpers */
   const getSong = (id) => songs.find((s) => s.id === id) || null
 
-  const playSong = async (id, { addToQueue = true } = {}) => {
+  /** Core play function */
+  const playSong = async (id, { replaceQueue = true } = {}) => {
     const song = getSong(id)
     if (!song) return
+
+    // 🔹 rebuild queue if needed
+    if (replaceQueue) {
+      const idx = songs.findIndex((s) => s.id === id)
+      if (idx >= 0) {
+        setQueue(songs.map((s) => s.id)) // full song order
+      }
+    }
+
+    setCurrentId(id)
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (audio.src !== song.src) {
+      audio.src = song.src
+      try {
+        audio.load()
+      } catch {}
+    }
+
     try {
-      if (addToQueue) {
-        setQueue((prev) => {
-          const filtered = prev.filter((x) => x !== id)
-          return [id, ...filtered]
-        })
-      }
-      setCurrentId(id)
-      const audio = audioRef.current
-      if (!audio) return
-      if (audio.src !== song.src) {
-        audio.src = song.src
-        try {
-          audio.load()
-        } catch {}
-      }
-      const p = audio.play()
-      if (p !== undefined) {
-        p.then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
-      } else {
-        setIsPlaying(true)
-      }
+      await audio.play()
+      setIsPlaying(true)
     } catch (e) {
-      console.error('playSong error', e)
+      console.warn('play error', e)
       setIsPlaying(false)
     }
   }
 
-  const togglePlayPause = async () => {
+  /** Toggle pause/resume */
+  const togglePlayPause = () => {
     const audio = audioRef.current
     if (!audio) return
     if (!currentId) {
-      if (songs.length) {
-        await playSong(songs[0].id)
-      }
+      if (songs.length) playSong(songs[0].id)
       return
     }
-    try {
-      if (isPlaying) {
-        audio.pause()
-        setIsPlaying(false)
-      } else {
-        const song = getSong(currentId)
-        if (song && audio.src !== song.src) {
-          audio.src = song.src
-          try {
-            audio.load()
-          } catch {}
-        }
-        const p = audio.play()
-        if (p !== undefined) {
-          p.then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
-        } else {
-          setIsPlaying(true)
-        }
-      }
-    } catch (e) {
-      console.error('togglePlayPause error', e)
+    if (isPlaying) {
+      audio.pause()
       setIsPlaying(false)
+    } else {
+      audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
     }
   }
 
-  // favorites
-  const isFavorite = (songId) => favorites.includes(songId)
-  const toggleFavorite = (songId) => {
-    setFavorites((prev) =>
-      prev.includes(songId) ? prev.filter((id) => id !== songId) : [songId, ...prev]
-    )
-  }
-
-  // remove song globally
-  const removeSong = (songId) => {
-    setSongs((prev) => prev.filter((s) => s.id !== songId))
-    setPlaylists((prev) =>
-      prev.map((pl) => ({
-        ...pl,
-        songIds: pl.songIds.filter((id) => id !== songId),
-      }))
-    )
-    setFavorites((prev) => prev.filter((id) => id !== songId))
-    if (currentId === songId) {
-      setCurrentId(null)
-      setIsPlaying(false)
-    }
-  }
-
-  // playlists
-  const createPlaylist = (name) => {
-    if (!name || !name.trim()) return
-    const id = 'pl' + Date.now()
-    setPlaylists((prev) => [{ id, name: name.trim(), songIds: [] }, ...prev])
-    return id
-  }
-
-  const addSongToPlaylist = (songId, playlistId) => {
-    setPlaylists((prev) =>
-      prev.map((pl) =>
-        pl.id !== playlistId || pl.songIds.includes(songId)
-          ? pl
-          : { ...pl, songIds: [...pl.songIds, songId] }
-      )
-    )
-  }
-
-  const removeSongFromPlaylist = (songId, playlistId) => {
-    setPlaylists((prev) =>
-      prev.map((pl) =>
-        pl.id !== playlistId
-          ? pl
-          : { ...pl, songIds: pl.songIds.filter((s) => s !== songId) }
-      )
-    )
-  }
-
-  const deletePlaylist = (playlistId) => {
-    setPlaylists((prev) => prev.filter((p) => p.id !== playlistId))
-  }
-
-  const moveSongBetweenPlaylists = (sourcePlId, destPlId, sourceIndex, destIndex) => {
-    setPlaylists((prev) => {
-      const copy = JSON.parse(JSON.stringify(prev))
-      const source = copy.find((p) => p.id === sourcePlId)
-      const dest = copy.find((p) => p.id === destPlId)
-      if (!source || !dest) return prev
-      const [moved] = source.songIds.splice(sourceIndex, 1)
-      dest.songIds.splice(destIndex, 0, moved)
-      return copy
-    })
-  }
-
-  // queue
-  const playNext = async () => {
-    if (!queue.length) {
-      setIsPlaying(false)
-      return
-    }
+  /** Queue navigation */
+  const playNext = () => {
+    if (!currentId || !queue.length) return
     const idx = queue.indexOf(currentId)
-    const next = idx >= 0 && idx < queue.length - 1 ? queue[idx + 1] : null
-    if (next) await playSong(next, { addToQueue: false })
-    else setIsPlaying(false)
+    if (idx >= 0 && idx < queue.length - 1) {
+      playSong(queue[idx + 1], { replaceQueue: false })
+    }
   }
 
-  const playPrev = async () => {
-    if (!queue.length) return
+  const playPrev = () => {
+    if (!currentId || !queue.length) return
     const idx = queue.indexOf(currentId)
-    const prev = idx > 0 ? queue[idx - 1] : null
-    if (prev) await playSong(prev, { addToQueue: false })
+    if (idx > 0) {
+      playSong(queue[idx - 1], { replaceQueue: false })
+    }
   }
 
-  // audio listeners
+  /* audio events */
   useEffect(() => {
     const a = audioRef.current
     if (!a) return
@@ -235,6 +146,7 @@ export default function App() {
     const onLoaded = () => setDuration(a.duration || 0)
     const onEnded = () => playNext()
     const onError = () => setIsPlaying(false)
+
     a.addEventListener('timeupdate', onTime)
     a.addEventListener('loadedmetadata', onLoaded)
     a.addEventListener('ended', onEnded)
@@ -245,35 +157,9 @@ export default function App() {
       a.removeEventListener('ended', onEnded)
       a.removeEventListener('error', onError)
     }
-  }, [queue, currentId, songs])
+  }, [queue, currentId])
 
-  useEffect(() => {
-    const a = audioRef.current
-    if (!a) return
-    const song = getSong(currentId)
-    if (!song) {
-      a.removeAttribute('src')
-      setPosition(0)
-      setDuration(0)
-      setIsPlaying(false)
-      return
-    }
-    if (a.src !== song.src) {
-      a.src = song.src
-      try {
-        a.load()
-      } catch {}
-    }
-    if (isPlaying) {
-      const p = a.play()
-      if (p !== undefined) {
-        p.then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
-      } else {
-        setIsPlaying(true)
-      }
-    }
-  }, [currentId])
-
+  /* seek */
   const seekTo = (t) => {
     if (!audioRef.current) return
     try {
@@ -282,27 +168,92 @@ export default function App() {
     } catch {}
   }
 
-  // uploads
-  const handleUpload = (file, imageFile) => {
-    try {
-      const id = 'u' + Date.now()
-      const src = URL.createObjectURL(file)
-      const cover = imageFile ? URL.createObjectURL(imageFile) : '/assets/cover1.jpg'
-      const newSong = {
-        id,
-        title: file.name.replace(/\.[^/.]+$/, ''),
-        artist: 'Local Upload',
-        src,
-        cover,
-        duration: 0,
+  /* favorites */
+  const isFavorite = (id) => favorites.includes(id)
+  const toggleFavorite = (id) =>
+    setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]))
+
+  /* playlists */
+  const createPlaylist = (name) => {
+    if (!name || !name.trim()) return
+    const id = 'pl' + Date.now()
+    setPlaylists((prev) => [{ id, name: name.trim(), songIds: [] }, ...prev])
+    return id
+  }
+  const addSongToPlaylist = (sid, pid) =>
+    setPlaylists((prev) =>
+      prev.map((pl) =>
+        pl.id !== pid || pl.songIds.includes(sid) ? pl : { ...pl, songIds: [...pl.songIds, sid] }
+      )
+    )
+  const removeSongFromPlaylist = (sid, pid) =>
+    setPlaylists((prev) =>
+      prev.map((pl) => (pl.id !== pid ? pl : { ...pl, songIds: pl.songIds.filter((s) => s !== sid) }))
+    )
+  const deletePlaylist = (pid) => setPlaylists((prev) => prev.filter((p) => p.id !== pid))
+
+  /* tabs */
+  const filterSong = (song, q, pls) => {
+    if (!q) return true
+    const t = q.toLowerCase()
+    if (song.title.toLowerCase().includes(t) || song.artist.toLowerCase().includes(t)) return true
+    return pls.some((pl) => pl.name.toLowerCase().includes(t) && pl.songIds.includes(song.id))
+  }
+  // Persist a new order for a playlist's songIds (called from PlaylistsTab on drag end)
+  const reorderPlaylistSongs = (playlistId, newSongIds) => {
+    setPlaylists(prev => {
+      const updated = prev.map(pl => pl.id === playlistId ? { ...pl, songIds: newSongIds } : pl)
+      return updated
+    })
+
+    // If the currently active queue matches the playlist (simple heuristic), update queue too
+    setQueue(prevQueue => {
+      // if queue contains at least one id from newSongIds AND all newSongIds are present in previous queue
+      const allPresent = newSongIds.every(id => prevQueue.includes(id))
+      if (allPresent && prevQueue.length >= newSongIds.length) {
+        // Replace the queue with the new playlist order (keeps currentId intact if present)
+        return newSongIds
       }
-      setSongs((prev) => [newSong, ...prev])
-    } catch (e) {
-      console.warn('upload error', e)
+      // if currentId belongs to this playlist, update queue to new order so playback follows the new order
+      const currentInNew = newSongIds.includes(currentId)
+      if (currentInNew) {
+        return newSongIds
+      }
+      return prevQueue
+    })
+  }
+
+  // Play an entire playlist in the order it is stored (sets queue and starts first song)
+  const playPlaylist = async (playlistId) => {
+    const pl = playlists.find(p => p.id === playlistId)
+    if (!pl || !pl.songIds || pl.songIds.length === 0) return
+
+    // set the queue to this playlist order
+    setQueue(pl.songIds)
+
+    // set current to first song and attempt to play it
+    const firstId = pl.songIds[0]
+    setCurrentId(firstId)
+
+    const audio = audioRef.current
+    const firstSong = getSong(firstId)
+    if (!audio || !firstSong) return
+
+    if (audio.src !== firstSong.src) {
+      audio.src = firstSong.src
+      try { audio.load() } catch {}
+    }
+    const p = audio.play()
+    if (p !== undefined) {
+      p.then(() => setIsPlaying(true)).catch(err => {
+        console.warn('playPlaylist play error', err)
+        setIsPlaying(false)
+      })
+    } else {
+      setIsPlaying(true)
     }
   }
 
-  // tabs
   const renderTab = () => {
     if (tab === 'home') {
       return (
@@ -319,7 +270,6 @@ export default function App() {
           isFavorite={isFavorite}
           setTab={setTab}
           favorites={favorites}
-          removeSong={removeSong}
         />
       )
     }
@@ -338,7 +288,6 @@ export default function App() {
             addSongToPlaylist={addSongToPlaylist}
             toggleFavorite={toggleFavorite}
             isFavorite={isFavorite}
-            removeSong={removeSong}
           />
         </div>
       )
@@ -352,9 +301,9 @@ export default function App() {
           addSongToPlaylist={addSongToPlaylist}
           removeSongFromPlaylist={removeSongFromPlaylist}
           deletePlaylist={deletePlaylist}
-          moveSongBetweenPlaylists={moveSongBetweenPlaylists}
           playSong={playSong}
-          removeSong={removeSong}
+          onReorder={reorderPlaylistSongs}
+          playPlaylist={playPlaylist}  
         />
       )
     }
@@ -372,28 +321,32 @@ export default function App() {
           playlists={playlists}
           createPlaylist={createPlaylist}
           setTab={setTab}
-          removeSong={removeSong}  
         />
       )
     }
     return null
   }
 
-  const filterSong = (song, q, playlistsLocal) => {
-    if (!q || !q.trim()) return true
-    const t = q.toLowerCase()
-    if (song.title.toLowerCase().includes(t) || song.artist.toLowerCase().includes(t)) return true
-    for (const pl of playlistsLocal) {
-      if (pl.name.toLowerCase().includes(t) && pl.songIds.includes(song.id)) return true
-    }
-    return false
-  }
-
   return (
     <div className="app" role="application" aria-label="Byte Music">
       <audio ref={audioRef} />
       <TopNav
-        onUpload={handleUpload}
+        onUpload={(file, imageFile) => {
+          const id = 'u' + Date.now()
+          const src = URL.createObjectURL(file)
+          const cover = imageFile ? URL.createObjectURL(imageFile) : '/assets/cover1.jpg'
+          setSongs((prev) => [
+            {
+              id,
+              title: file.name.replace(/\.[^/.]+$/, ''),
+              artist: 'Local Upload',
+              src,
+              cover,
+              duration: 0,
+            },
+            ...prev,
+          ])
+        }}
         setTab={setTab}
         currentTab={tab}
         searchQuery={searchQuery}
@@ -402,7 +355,10 @@ export default function App() {
           setTab('search')
         }}
       />
-      <main>{renderTab()}</main>
+
+      <main>{renderTab()}
+       {/* Spacer so MiniPlayer doesn't overlap content */}
+       <div style={{ height: 80 }} />   {/* adjust height to match MiniPlayer height */}</main>
       <MiniPlayer
         expanded={expanded}
         setExpanded={setExpanded}

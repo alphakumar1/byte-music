@@ -10,14 +10,23 @@ export default function SearchBar({ query, setQuery, autoFocus = false }) {
   return (
     <div style={{margin: '12px 0'}}>
       <input
-        ref={ref}
-        className="search-input"
-        aria-label="Search"
-        placeholder="Search songs, artists, playlists..."
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        style={{width:'100%', padding:'10px', borderRadius:10, border:'1px solid rgba(255,255,255,0.03)', background:'rgba(255,255,255,0.02)'}}
-      />
+  type="text"
+  placeholder="Search songs..."
+  value={query}
+  onChange={(e) => setQuery(e.target.value)}
+  autoFocus={autoFocus}
+  style={{
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: 8,
+    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.05)',
+    color: '#f5f5f5',             // ✅ brighter text
+    fontSize: 14,
+    outline: 'none'
+  }}
+/>
+
     </div>
   )
 }

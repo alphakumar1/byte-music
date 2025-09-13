@@ -1,22 +1,6 @@
+// src/components/TopNav.jsx
 import React, { useRef, useState, useEffect } from 'react'
 import { FiUpload, FiSearch, FiHome, FiHeart, FiList } from 'react-icons/fi'
-
-/**
- * TopNav (updated)
- * - Layout: two stacked rows
- *   Row 1 (top): logo (left)  --- upload button (right)
- *   Row 2 (under): tabs in a single horizontal line centered (Home / Search / Fav / Playlists)
- * - Removed text "Byte Music" (logo-only on the left)
- * - Tabs are accessible buttons, show icon + label, and get a stronger visual accent when active
- *
- * Props:
- *  - onUpload(file, imageFile)
- *  - setTab(tabName)
- *  - currentTab (string)
- *  - searchQuery, setSearchQuery
- *
- * Logo path: /assets/logo.png (fallback: an empty space if missing)
- */
 
 export default function TopNav({ onUpload, setTab, currentTab, searchQuery, setSearchQuery }) {
   const fileRef = useRef(null)
@@ -29,7 +13,7 @@ export default function TopNav({ onUpload, setTab, currentTab, searchQuery, setS
     { id: 'playlists', label: 'Playlists', icon: <FiList /> }
   ]
 
-  // upload actions
+  // Upload logic
   const openAudioPicker = () => fileRef.current && fileRef.current.click()
   const onFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -40,14 +24,12 @@ export default function TopNav({ onUpload, setTab, currentTab, searchQuery, setS
     if (imageRef.current) imageRef.current.value = ''
   }
 
-  // small helper for active style (keeps styling logic here, so we don't modify global CSS)
   const activeStyle = {
     boxShadow: '0 10px 34px rgba(0,194,255,0.10)',
     transform: 'translateY(-2px)',
     background: 'linear-gradient(90deg, rgba(0,194,255,0.10), rgba(255,91,209,0.06))'
   }
 
-  // responsive: collapse labels on very small screens (icon-only)
   const [iconOnly, setIconOnly] = useState(false)
   useEffect(() => {
     const update = () => setIconOnly(window.innerWidth < 420)
@@ -57,42 +39,51 @@ export default function TopNav({ onUpload, setTab, currentTab, searchQuery, setS
   }, [])
 
   return (
-    <nav aria-label="Top navigation" style={{width:'100%'}}>
-      {/* Hidden file inputs */}
-      <input ref={fileRef} type="file" accept="audio/*" style={{display:'none'}} onChange={onFileChange} />
-      <input ref={imageRef} type="file" accept="image/*" style={{display:'none'}} />
+    <nav aria-label="Top navigation" style={{ width: '100%' }}>
+      {/* Hidden inputs */}
+      <input ref={fileRef} type="file" accept="audio/*" style={{ display: 'none' }} onChange={onFileChange} />
+      <input ref={imageRef} type="file" accept="image/*" style={{ display: 'none' }} />
 
-      {/* Row 1: Logo (left) and Upload (right) */}
-      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:8}}>
-        {/* Logo only (image). If logo.png missing, the img will hide itself gracefully */}
-        <div style={{display:'flex', alignItems:'center', gap:12}}>
-          <div style={{width:48, height:48, borderRadius:12, overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center'}}>
+      {/* Row 1: Logo + Title + Upload */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Logo */}
+          <div style={{ width: 50, height: 50, borderRadius: 12, overflow: 'hidden' }}>
             <img
               src="/assets/logo.png"
-              alt="Byte Music"
-              style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}
+              alt="Byte Music Logo"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
           </div>
+          {/* Title */}
+          <div style={{
+            fontWeight: 900,
+            fontSize: 22,
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+            color: 'var(--neon-cyan)',
+            textShadow: '0 0 6px var(--neon-green), 0 0 12px var(--neon-pink)'
+          }}>
+            BYTE MUSIC
+          </div>
         </div>
 
-        {/* Right actions */}
-        <div style={{display:'flex', alignItems:'center', gap:8}}>
-          <button
-            className="icon-btn"
-            aria-label="Upload audio"
-            title="Upload audio"
-            onClick={openAudioPicker}
-            style={{display:'inline-flex'}}
-          >
-            <FiUpload />
-          </button>
-        </div>
+        {/* Upload Button */}
+        <button
+          className="icon-btn"
+          aria-label="Upload audio"
+          title="Upload audio"
+          onClick={openAudioPicker}
+          style={{ display: 'inline-flex', fontSize: 18 }}
+        >
+          <FiUpload />
+        </button>
       </div>
 
-      {/* Row 2: Tabs centered in one horizontal line */}
-      <div style={{display:'flex', justifyContent:'center', alignItems:'center', paddingTop:4}}>
-        <div className="tabs" style={{display:'flex', gap:10, alignItems:'center', justifyContent:'center', width:'100%', maxWidth:720}}>
+      {/* Row 2: Tabs */}
+      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 4 }}>
+        <div className="tabs" style={{ display: 'flex', gap: 10, alignItems: 'center', maxWidth: 720 }}>
           {tabs.map(t => (
             <button
               key={t.id}
@@ -101,11 +92,11 @@ export default function TopNav({ onUpload, setTab, currentTab, searchQuery, setS
               onClick={() => setTab(t.id)}
               aria-label={t.label}
               title={t.label}
-              style={currentTab === t.id ? activeStyle : {minWidth:82, display:'inline-flex', alignItems:'center', justifyContent:'center'}}
+              style={currentTab === t.id ? activeStyle : { minWidth: 82, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <span style={{display:'inline-flex', gap:8, alignItems:'center'}}>
-                <span style={{display:'inline-flex', fontSize:16}} aria-hidden>{t.icon}</span>
-                {!iconOnly && <span style={{display:'inline-block'}}>{t.label}</span>}
+              <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 16 }}>{t.icon}</span>
+                {!iconOnly && <span>{t.label}</span>}
               </span>
             </button>
           ))}

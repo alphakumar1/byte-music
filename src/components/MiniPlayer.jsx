@@ -23,7 +23,7 @@ export default function MiniPlayer({
   }
 
   if (!expanded) {
-    // Collapsed bottom strip
+    // ✅ Collapsed strip with Prev / Play-Pause / Next
     return (
       <div
         className="mini-player collapsed"
@@ -37,11 +37,11 @@ export default function MiniPlayer({
             <img
               src={currentSong?.cover || '/assets/cover1.jpg'}
               alt={currentSong ? `${currentSong.title} cover` : 'No cover'}
-              style={{ width: '100%', height: '100%', borderRadius: 6, objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
             />
           </div>
 
-          {/* Title truncated */}
+          {/* Title */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
@@ -56,23 +56,47 @@ export default function MiniPlayer({
             </div>
           </div>
 
-          {/* Play/Pause */}
-          <button
-            className="icon-btn"
-            onClick={(e) => {
-              e.stopPropagation()
-              togglePlay()
-            }}
-            aria-label={isPlaying ? 'Pause' : 'Play'}
-          >
-            {isPlaying ? <FiPause /> : <FiPlay />}
-          </button>
+          {/* Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              className="icon-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                playPrev()
+              }}
+              aria-label="Previous"
+            >
+              <FiSkipBack />
+            </button>
+
+            <button
+              className="icon-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                togglePlay()
+              }}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? <FiPause /> : <FiPlay />}
+            </button>
+
+            <button
+              className="icon-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                playNext()
+              }}
+              aria-label="Next"
+            >
+              <FiSkipForward />
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-  // Expanded full page
+  // Expanded full page (unchanged)
   return (
     <div className="mini-player expanded-page">
       {/* Header */}
@@ -88,7 +112,7 @@ export default function MiniPlayer({
         <img
           src={currentSong?.cover || '/assets/cover1.jpg'}
           alt={currentSong ? `${currentSong.title} cover` : 'No cover'}
-          style={{ width: 180, height: 180, borderRadius: 12, objectFit: 'cover' }}
+          style={{ width: 200, height: 200, borderRadius: '50%', objectFit: 'cover' }}
         />
       </div>
 

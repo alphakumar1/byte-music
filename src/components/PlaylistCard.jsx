@@ -13,15 +13,10 @@ export default function PlaylistCard({ playlist, songs, onOpen, playSong }) {
         ) : (
           <div className="cover-gradient" />
         )}
-        <button
-          className="play-btn"
-          onClick={(e) => {
-            e.stopPropagation()
-            if (playlist.songIds.length) playSong(playlist.songIds[0])
-          }}
-        >
-          ▶
-        </button>
+        <button className="playlist-play-btn" onClick={() => playPlaylist(pl.id)} aria-label="Play playlist">
+  <FiPlay />
+</button>
+
       </div>
       <div className="playlist-name">{playlist.name}</div>
     </div>

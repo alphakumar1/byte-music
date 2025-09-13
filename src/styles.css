@@ -369,3 +369,288 @@ body {
   z-index: 2000;
   overflow-y: auto;
 }
+
+/* SongCard improvements */
+.song-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.2s ease;
+  position: relative;
+}
+.song-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.song-cover {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+.song-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.song-cover .overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  font-size: 20px;
+  color: #fff;
+}
+
+.song-info {
+  flex: 1;
+  min-width: 0;
+}
+.song-title {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.song-artist {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.song-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.playlist-menu {
+  position: relative;
+}
+.playlist-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 8px;
+  width: 220px;
+  z-index: 100;
+}
+.playlist-dropdown .dropdown-section + .dropdown-section {
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+}
+.dropdown-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.dropdown-item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.dropdown-item.empty {
+  color: var(--muted);
+  cursor: default;
+}
+
+.new-playlist {
+  display: flex;
+  gap: 6px;
+}
+.new-playlist input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text, #fff);
+  font-size: 13px;
+}
+.new-playlist .create-btn {
+  background: #1db954; /* Spotify green */
+  border: none;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.new-playlist .create-btn:hover {
+  background: #18a148;
+}
+
+/* ============ SongCard Cover ============ */
+.song-cover {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%; /* circular cover */
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+.song-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.song-cover.spinning img {
+  animation: spin 4s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============ Neon Dropdown ============ */
+.playlist-dropdown.neon-theme {
+  background: #0d0d0d;
+  border: 1px solid rgba(0, 255, 200, 0.3);
+  border-radius: 12px;
+  padding: 10px;
+  width: 230px;
+  z-index: 100;
+  box-shadow: 0 0 12px rgba(0, 255, 200, 0.4),
+              0 0 24px rgba(255, 0, 200, 0.2),
+              0 0 36px rgba(0, 200, 255, 0.2);
+}
+
+.playlist-dropdown .dropdown-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0ff;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+.dropdown-item:hover {
+  background: rgba(0, 255, 200, 0.1);
+  color: #0ff;
+}
+.dropdown-item.empty {
+  color: var(--muted);
+  cursor: default;
+}
+
+.new-playlist {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.new-playlist input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 255, 200, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 13px;
+}
+.new-playlist .create-btn {
+  background: linear-gradient(135deg, #00f6ff, #ff00d4);
+  border: none;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 0 8px rgba(0, 255, 200, 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.new-playlist .create-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(255, 0, 200, 0.8);
+}
+/* --- BACKGROUND (final override) --- */
+/* --- BACKGROUND (Dark with Blue + Green Neon Accents) --- */
+body {
+  margin: 0;
+  background: radial-gradient(circle at 25% 20%, rgba(0, 246, 255, 0.15) 0%, transparent 30%),
+              radial-gradient(circle at 75% 80%, rgba(57, 255, 20, 0.12) 0%, transparent 35%),
+              linear-gradient(180deg, #050510 0%, #0b0b15 100%);
+  background-size: 140% 140%;
+  animation: bgShift 14s ease-in-out infinite;
+  color: var(--text);
+  padding-bottom: 140px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* --- Playlist Search Input --- */
+.playlist-input {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  font-size: 14px;
+  width: 100%;
+}
+
+.playlist-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus) rgba(0,246,255,0.5),
+              0 0 8px var(--neon-green);
+}
+
+
+
+/* --- Playlist Round Play Button --- */
+.playlist-play-btn {
+  background: var(--neon-green);
+  color: #000;
+  border: none;
+  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(57, 255, 20, 0.6),
+              0 0 20px rgba(57, 255, 20, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.playlist-play-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 18px rgba(57, 255, 20, 0.9),
+              0 0 28px rgba(57, 255, 20, 0.7);
+}
